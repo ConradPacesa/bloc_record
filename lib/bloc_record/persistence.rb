@@ -35,6 +35,14 @@ module Persistence
     self.class.update(self.id, updates)
   end
 
+  def method_missing(m, *args)
+    attribute = m.to_s
+    attribute.slice! "update_"
+    value = args[0]
+
+    update_attribute(attribute, value)
+  end
+
   module ClassMethods
     def update_all(updates)
       update(nil, updates)
@@ -60,7 +68,13 @@ module Persistence
       updates.delete "id"
       updates_array = updates.map { |key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}" }
       
-      if ids.class == Fixnum
+      if ids.class == Array && updates.class == Array
+        updates_array = updates.map { |update| update.map { |key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}" }}
+        sql_statements = []
+        updates_array.each_with_index { |val, index| sql_statements << "UPDATE table SET #{updates_array[index] * ","} WHERE id = #{ids[index]};" }.join(" ")
+        rows = connection.execute(sql_statements)
+        return true
+      elsif ids.class == Integer
         where_clause = "WHERE id = #{ids};"
       elsif ids.class == Array
         where_clause = ids.empty? ? ";" : "WHERE id IN (#{ids.join(",")});"

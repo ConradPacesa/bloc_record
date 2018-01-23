@@ -205,6 +205,9 @@ module Selection
         SQL
       when Hash
         joins = (args.first.map { |key, value| "INNER JOIN #{key} ON #{key}.#{table}_id = #{table}.id" }.join(" ")) + " " + ((args.first.map { |key, value| "INNER JOIN #{value} ON #{value}.#{key}_id = #{key}.id" }.join(" ")))
+        rows = connection.execute <<-SQL
+          SELECT * FROM #{table} #{joins};
+        SQL
       end
     end
 
