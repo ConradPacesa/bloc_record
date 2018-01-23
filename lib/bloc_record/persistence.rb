@@ -27,7 +27,27 @@ module Persistence
     true
   end
 
+  def update_attribute(attribute, value)
+    self.class.update(self.id, { attribute => value })
+  end
+
+  def update_attributes(updates)
+    self.class.update(self.id, updates)
+  end
+
+  def method_missing(m, *args)
+    attribute = m.to_s
+    attribute.slice! "update_"
+    value = args[0]
+
+    update_attribute(attribute, value)
+  end
+
   module ClassMethods
+    def update_all(updates)
+      update(nil, updates)
+    end
+
     def create(attrs) 
       attrs = BlocRecord::Utility.convert_keys(attrs)
       attrs.delete("id")
@@ -41,6 +61,32 @@ module Persistence
       data = Hash[attributes.zip attrs.values]
       data["id"] = connection.execute("SELECT last_insert_rowid();")[0][0]
       new(data)
-    end 
+    end
+
+    def update(ids, updates)
+      updates = BlocRecord::Utility.convert_keys(updates)
+      updates.delete "id"
+      updates_array = updates.map { |key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}" }
+      
+      if ids.class == Array && updates.class == Array
+        updates_array = updates.map { |update| update.map { |key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}" }}
+        sql_statements = []
+        updates_array.each_with_index { |val, index| sql_statements << "UPDATE table SET #{updates_array[index] * ","} WHERE id = #{ids[index]};" }.join(" ")
+        rows = connection.execute(sql_statements)
+        return true
+      elsif ids.class == Integer
+        where_clause = "WHERE id = #{ids};"
+      elsif ids.class == Array
+        where_clause = ids.empty? ? ";" : "WHERE id IN (#{ids.join(",")});"
+      else 
+        where_clause = ";"
+      end 
+
+      connection.execute <<-SQL
+        UPDATE #{table}
+        SET #{updates_array * ","} #{where_clause}
+      SQL
+      true
+    end
   end
 end

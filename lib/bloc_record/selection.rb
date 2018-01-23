@@ -205,7 +205,9 @@ module Selection
         SQL
       when Hash
         joins = (args.first.map { |key, value| "INNER JOIN #{key} ON #{key}.#{table}_id = #{table}.id" }.join(" ")) + " " + ((args.first.map { |key, value| "INNER JOIN #{value} ON #{value}.#{key}_id = #{key}.id" }.join(" ")))
-      end
+        rows = connection.execute <<-SQL
+          SELECT * FROM #{table} #{joins};
+        SQL
       end
     end
 
@@ -221,7 +223,9 @@ module Selection
   end
 
   def rows_to_array(rows)
-    rows.map { |row| new(Hash[columns.zip(row)])}
+    collection = BlocRecord::Collection.new
+    rows.each { |row| collection << new(Hash[columns.zip(row)]) }
+    collection
   end
 
   def validate_int(int)
