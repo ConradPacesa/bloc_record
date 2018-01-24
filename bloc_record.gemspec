@@ -13,4 +13,5 @@ Gem::Specification.new do |s|
   s.license       = 'MIT'
   s.add_runtime_dependency 'sqlite3', '~> 1.3'
   s.add_runtime_dependency 'activesupport'
+  s.add_runtime_dependency 'pg', '~> 1.0'
 end
