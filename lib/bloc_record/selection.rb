@@ -6,16 +6,16 @@ module Selection
       validate_int(id)
     end
 
-    if ids.length == 1 
+    if ids.length == 1
       find_one(ids.first)
-    else 
+    else
       rows = connection.execute <<-SQL
         SELECT #{columns.join ","} FROM #{table}
         WHERE id IN (#{ids.join(",")});
       SQL
 
       rows_to_array(rows)
-    end 
+    end
   end
 
   def find_one(id)
@@ -48,14 +48,14 @@ module Selection
     if num > 1
       rows = connection.execute <<-SQL
         SELECT #{columns.join ","} FROM #{table}
-        ORDER BY random() 
+        ORDER BY random()
         LIMIT #{num};
       SQL
 
       rows_to_array(rows)
-    else 
+    else
       take_one
-    end 
+    end
   end
 
   def take_one
@@ -110,7 +110,7 @@ module Selection
   def find_each(start: 0, batch_size: 1000)
     offset = start
 
-    loop do 
+    loop do
       rows = connection.execute <<-SQL
         SELECT #{columns.join ","} FROM #{table}
         WHERE id > #{offset}
@@ -149,7 +149,7 @@ module Selection
   end
 
   def where(*args)
-    if args.count > 1 
+    if args.count > 1
       expression = args.shift
       params = args
     else
@@ -192,11 +192,11 @@ module Selection
       rows = connection.execute <<-SQL
         SELECT * FROM #{table} #{joins};
       SQL
-    else 
+    else
       case args.first
       when String
         rows = connection.execute <<-SQL
-          SELECT * FROM #{table} #{BlocRecord::Utility.sql_strings(args.first)}; 
+          SELECT * FROM #{table} #{BlocRecord::Utility.sql_strings(args.first)};
         SQL
       when Symbol
         rows = connection.execute <<-SQL

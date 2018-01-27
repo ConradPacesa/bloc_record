@@ -52,16 +52,16 @@ module Persistence
       update(nil, updates)
     end
 
-    def create(attrs) 
+    def create(attrs)
       attrs = BlocRecord::Utility.convert_keys(attrs)
       attrs.delete("id")
       vals = attributes.map { |key| BlocRecord::Utility.sql_strings(attrs[key]) }
-  
-      connection.execute <<-SQL 
+
+      connection.execute <<-SQL
         INSERT INTO #{table} (#{attributes.join ","})
         VALUES (#{vals.join ","});
       SQL
-      
+
       data = Hash[attributes.zip attrs.values]
       data["id"] = connection.execute("SELECT last_insert_rowid();")[0][0]
       new(data)
@@ -71,7 +71,7 @@ module Persistence
       updates = BlocRecord::Utility.convert_keys(updates)
       updates.delete "id"
       updates_array = updates.map { |key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}" }
-      
+
       if ids.class == Array && updates.class == Array
         updates_array = updates.map { |update| update.map { |key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}" }}
         sql_statements = []
@@ -82,9 +82,9 @@ module Persistence
         where_clause = "WHERE id = #{ids};"
       elsif ids.class == Array
         where_clause = ids.empty? ? ";" : "WHERE id IN (#{ids.join(",")});"
-      else 
+      else
         where_clause = ";"
-      end 
+      end
 
       connection.execute <<-SQL
         UPDATE #{table}
@@ -96,10 +96,10 @@ module Persistence
     def destroy(*id)
       if id.length > 1
         where_clause = "WHERE id IN (#{id.join(",")});"
-      else 
+      else
         where_clause = "WHERE id = #{id.first};"
       end
-      connection.execute <<-SQL 
+      connection.execute <<-SQL
         DELETE FROM #{table} #{where_clause}
       SQL
 
@@ -117,19 +117,19 @@ module Persistence
           connection.execute <<-SQL
             DELETE FROM #{table};
           SQL
-        else 
+        else
           conditions_hash.each do |h|
             h.chomp!("?")
           end
           conditions = conditions_hash.join("")
         end
       end
-      
+
       connection.execute <<-SQL
         DELETE FROM #{table}
         WHERE #{conditions};
       SQL
-  
+
       true
     end
   end

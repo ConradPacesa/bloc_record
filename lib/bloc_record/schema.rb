@@ -1,32 +1,48 @@
 require 'sqlite3'
+require 'pg'
 require 'bloc_record/utility'
 
 module Schema
-  def table 
+  def table
     BlocRecord::Utility.underscore(name)
   end
 
-  def schema 
-    unless @schema
-      @schema = {}
-      connection.table_info(table) do |col|
-        @schema[col["name"]] = col["type"]
-      end 
+  def schema
+    case BlocRecord.dbs
+    when :sqlite
+      unless @schema
+        @schema = {}
+        connection.table_info(table) do |col|
+          @schema[col["name"]] = col["type"]
+        end
+      end
+    when :pg
+      unless @schema
+        @schema = {}
+        rows = connection.exec <<-SQL
+          SELECT column_name, data_type
+          FROM information_schema.columns
+          WHERE table_name = '#{table}';
+        SQL
+        rows.each do |row|
+          @schema[row["column_name"]] = row["data_type"]
+        end
+      end
     end
     @schema
   end
-  
-  def columns 
+
+  def columns
     schema.keys
-  end 
+  end
 
-  def attributes 
+  def attributes
     columns - ["id"]
-  end 
+  end
 
-  def count 
+  def count
     connection.execute(<<-SQL)[0][0]
       SELECT COUNT(*) FROM #{table}
     SQL
-  end 
+  end
 end
