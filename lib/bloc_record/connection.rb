@@ -1,7 +1,13 @@
 require 'sqlite3'
+require 'pg'
 
-module Connection 
+module Connection
   def connection
-    @connection ||= SQLite3::Database.new(BlocRecord.database_filename)
+    case BlocRecord.dbs
+    when :sqlite
+      @connection ||= SQLite3::Database.new(BlocRecord.database_filename)
+    when :pg
+      @connection = PG.connect :dbname => "address_book", :user => "conrad", :password => "password"
+    end
   end
-end 
+end
