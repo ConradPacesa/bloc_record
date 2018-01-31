@@ -1,9 +1,7 @@
 module BlocRecord
-  def self.connect_to(dbs)
+  def self.connect_to(dbs, database_filename=nil)
     @dbs = dbs
-    if dbs == :sqlite
-      @database_filename = "db/address_bloc.sqlite"
-    end
+    @database_filename = database_filename
   end
 
   def self.database_filename
